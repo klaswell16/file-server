@@ -24,10 +24,19 @@ public class Client {
                 case "L":
                     getList();
                     break;
-                case "D":
+                case "N":
                     downloadFile();
                     System.out.println("Enter the file name you want to download");
                     String fileName = keyboard.nextLine();
+                    break;
+                case "U":
+                    uploadFile();
+                    break;
+                case "D":
+                    deleteFile();
+                    break;
+                case "R":
+                    renameFile();
                     break;
             }
         }
