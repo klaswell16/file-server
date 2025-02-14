@@ -42,12 +42,7 @@ public class Client {
         }
         channel.shutdownOutput();
     }
-    public getList() {
-        SocketChannel channel = SocketChannel.open();
-
-        channel.connect(
-                new InetSocketAddress(args[0], serverPort)
-        );
+    public String getList(SocketChannel channel) {
         ByteBuffer buffer = ByteBuffer("L");
         channel.write(buffer);
         FileChannel fc = fs.getChannel();
