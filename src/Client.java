@@ -32,13 +32,17 @@ public class Client {
         ByteBuffer buffer = ByteBuffer.wrap("L".getBytes());
         channel.write(buffer);
 
-        buffer =
-                ByteBuffer.allocate(1);
-        while(channel.read(buffer) >=0) {
-            buffer.flip();
-            channel.write(buffer);
-            buffer.clear();
-        }
+
+
+
+        ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
+        int bytesRead = channel.read(replyBuffer);
+        channel.close();
+        replyBuffer.flip();
+        byte[] a = new byte[bytesRead];
+        replyBuffer.get(a);
+        System.out.println(new String(a));
+
         channel.close();
     }
 
