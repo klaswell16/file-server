@@ -13,41 +13,26 @@ public class Server {
                 ServerSocketChannel.open();
         listenChannel.bind(new InetSocketAddress(3000));
         while (true) {
-            SocketChannel serveChannel =
+            SocketChannel serverChannel =
                     listenChannel.accept();
             ByteBuffer buffer =
                     ByteBuffer.allocate(1024);
-            int bytesRead = serveChannel.read(buffer);
+            int bytesRead = serverChannel.read(buffer);
             buffer.flip();
             byte[] a = new byte[bytesRead];
             buffer.get(a);
             String fileName = new String(a);
             System.out.println("File name: " + fileName);
-            File file = new File("ServerFiles/" + fileName);
-
-
-
-            FileInputStream fs =
-                    new FileInputStream(file);
-            FileChannel fc = fs.getChannel();
-            ByteBuffer fileContent =
-                    ByteBuffer.allocate(1024);
-            int byteRead = 0;
-            do {
-                byteRead = fc.read(fileContent);
-                fileContent.flip();
-                serveChannel.write(fileContent);
-                fileContent.clear();
-            } while (byteRead >= 0);
-            fs.close();
             switch (fileName) {
                 case "L":
-                    System.out.print("Yes");
+                    ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
+                    replyBuffer = ByteBuffer.wrap("Yes".getBytes());
+                    serverChannel.write(replyBuffer);
+                    replyBuffer.clear();
                     break;
-                }
             }
-
+            serverChannel.close();
         }
-
     }
+}
 
