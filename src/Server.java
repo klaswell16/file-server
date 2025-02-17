@@ -7,6 +7,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+
 public class Server {
     public static void main(String[] args) throws IOException {
         ServerSocketChannel listenChannel =
@@ -21,10 +22,19 @@ public class Server {
             buffer.flip();
             byte[] a = new byte[bytesRead];
             buffer.get(a);
-            String fileName = new String(a);
-            System.out.println("File name: " + fileName);
-            switch (fileName) {
+            String header = new String(a);
+            System.out.println("Header: " + header);
+            switch (header) {
                 case "L":
+                    File directoryPath = new File("ServerFiles/");
+                    File[] filesList = directoryPath.listFiles();
+
+                    assert filesList != null;
+                    for(File file : filesList){
+
+                        System.out.println("File name: "+file.getName());
+
+                    }
                     ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
                     replyBuffer = ByteBuffer.wrap("Yes".getBytes());
                     serverChannel.write(replyBuffer);
