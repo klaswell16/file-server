@@ -25,29 +25,8 @@ public class Client {
                 case "L":
                     getList(channel);
                     break;
-                case "N":
-                    downloadFile();
-                    System.out.println("Enter the file name you want to download");
-                    String fileName = keyboard.nextLine();
-                    break;
-                case "U":
-                    uploadFile();
-                    break;
-                case "D":
-                    deleteFile();
-                    System.out.println("Enter the file name you want to delete");
-                    fileName = keyboard.nextLine();
-                    break;
-                case "R":
-                    renameFile();
-                    System.out.println("Enter the file name of the file you want to rename:");
-                    fileName = keyboard.nextLine();
-                    System.out.println("Enter the new name:");
-                    String newName = keyboard.nextLine();
-                    break;
             }
         }
-        channel.shutdownOutput();
     }
     public static void getList(SocketChannel channel) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap("L".getBytes());
@@ -62,9 +41,6 @@ public class Client {
         }
         channel.close();
     }
-    public downloadFile(fileName){
-        ByteBuffer buffer = ByteBuffer.wrap(filename.getBytes());
-        channel.write(buffer);
-    }
+
 
 }

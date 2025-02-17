@@ -41,47 +41,14 @@ public class Server {
                     fileContent.clear();
                 } while (byteRead >= 0);
                 fs.close();
-                switch (byteRead) {
+                switch (fileName) {
                     case "L":
-                        getList();
-                        break;
-                    case "N":
-                        downloadFile():
-                        break;
-                    case "U":
-                        uploadFile();
-                        break;
-                    case "D":
-                        deleteFile():
-                        break;
-                    case "R":
-                        renameFile();
+                        System.out.print("Yes");
                         break;
                 }
             }
             serveChannel.close();
         }
 
-
-        private static void renameFile () {
-
-        }
-
-        private static void deleteFile () {
-
-        }
-
-        private static void uploadFile () {
-
-        }
-
-        private static void downloadFile () {
-
-        }
-
-        private static String getList() {
-
-            return null;
-        }
     }
 }
