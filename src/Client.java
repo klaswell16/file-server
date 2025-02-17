@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -22,7 +23,7 @@ public class Client {
         while (true) {
             switch (command) {
                 case "L":
-                    getList();
+                    getList(channel);
                     break;
                 case "N":
                     downloadFile();
@@ -34,28 +35,32 @@ public class Client {
                     break;
                 case "D":
                     deleteFile();
+                    System.out.println("Enter the file name you want to delete");
+                    fileName = keyboard.nextLine();
                     break;
                 case "R":
                     renameFile();
+                    System.out.println("Enter the file name of the file you want to rename:");
+                    fileName = keyboard.nextLine();
+                    System.out.println("Enter the new name:");
+                    String newName = keyboard.nextLine();
                     break;
             }
         }
         channel.shutdownOutput();
     }
-    public String getList(SocketChannel channel) {
-        ByteBuffer buffer = ByteBuffer("L");
+    public static void getList(SocketChannel channel) throws IOException {
+        ByteBuffer buffer = ByteBuffer.wrap("L".getBytes());
         channel.write(buffer);
-        FileChannel fc = fs.getChannel();
-        ByteBuffer fileContent =
-                ByteBuffer.allocate(1024);
-        while(channel.read(fileContent) >=0) {
-            fileContent.flip();
-            fc.write(fileContent);
-            fileContent.clear();
+
+        buffer =
+                ByteBuffer.allocate(1);
+        while(channel.read(buffer) >=0) {
+            buffer.flip();
+            channel.write(buffer);
+            buffer.clear();
         }
-        fs.close();
         channel.close();
-        return "L";
     }
     public downloadFile(fileName){
         ByteBuffer buffer = ByteBuffer.wrap(filename.getBytes());

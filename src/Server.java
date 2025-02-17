@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -7,7 +8,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 public class Server {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         ServerSocketChannel listenChannel =
                 ServerSocketChannel.open();
         listenChannel.bind(new InetSocketAddress(3000));
@@ -23,6 +24,7 @@ public class Server {
             String fileName = new String(a);
             System.out.println("File name: " + fileName);
             File file = new File("ServerFiles/" + fileName);
+
             if (!file.exists()) {
                 System.out.println("File doesn't exist");
             } else {
@@ -39,7 +41,7 @@ public class Server {
                     fileContent.clear();
                 } while (byteRead >= 0);
                 fs.close();
-                switch (recievedCommand) {
+                switch (byteRead) {
                     case "L":
                         getList();
                         break;
@@ -77,7 +79,8 @@ public class Server {
 
         }
 
-        private static String getList () {
+        private static String getList() {
+
             return null;
         }
     }
