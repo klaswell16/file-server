@@ -25,30 +25,29 @@ public class Server {
             System.out.println("File name: " + fileName);
             File file = new File("ServerFiles/" + fileName);
 
-            if (!file.exists()) {
-                System.out.println("File doesn't exist");
-            } else {
-                FileInputStream fs =
-                        new FileInputStream(file);
-                FileChannel fc = fs.getChannel();
-                ByteBuffer fileContent =
-                        ByteBuffer.allocate(1024);
-                int byteRead = 0;
-                do {
-                    byteRead = fc.read(fileContent);
-                    fileContent.flip();
-                    serveChannel.write(fileContent);
-                    fileContent.clear();
-                } while (byteRead >= 0);
-                fs.close();
-                switch (fileName) {
-                    case "L":
-                        System.out.print("Yes");
-                        break;
+
+
+            FileInputStream fs =
+                    new FileInputStream(file);
+            FileChannel fc = fs.getChannel();
+            ByteBuffer fileContent =
+                    ByteBuffer.allocate(1024);
+            int byteRead = 0;
+            do {
+                byteRead = fc.read(fileContent);
+                fileContent.flip();
+                serveChannel.write(fileContent);
+                fileContent.clear();
+            } while (byteRead >= 0);
+            fs.close();
+            switch (fileName) {
+                case "L":
+                    System.out.print("Yes");
+                    break;
                 }
             }
-            serveChannel.close();
+
         }
 
     }
-}
+
