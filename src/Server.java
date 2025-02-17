@@ -1,11 +1,13 @@
 import java.io.File;
-import java.io.FileInputStream;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Server {
@@ -26,20 +28,26 @@ public class Server {
             System.out.println("Header: " + header);
             switch (header) {
                 case "L":
+
                     File directoryPath = new File("ServerFiles/");
                     File[] filesList = directoryPath.listFiles();
+                    if(filesList != null){
+                        List<String> fileNames = new ArrayList<>();
 
-                    assert filesList != null;
-                    for(File file : filesList){
+                        for(File file : filesList){
+                            fileNames.add(file.getName());
 
-                        System.out.println("File name: "+file.getName());
-
+                        }
+                        String fileNamesString = String.join("\n", fileNames);
+                        ByteBuffer replyBuffer = ByteBuffer.wrap(fileNamesString.getBytes());
+                        serverChannel.write(replyBuffer);
+                    }else{
+                        ByteBuffer replyBuffer = ByteBuffer.wrap("No files found".getBytes());
+                        serverChannel.write(replyBuffer);
                     }
-                    ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
-                    replyBuffer = ByteBuffer.wrap("Yes".getBytes());
-                    serverChannel.write(replyBuffer);
-                    replyBuffer.clear();
                     break;
+
+
             }
             serverChannel.close();
         }

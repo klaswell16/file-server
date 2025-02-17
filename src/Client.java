@@ -25,6 +25,9 @@ public class Client {
                 case "L":
                     getList(channel);
                     break;
+                default:
+                    System.out.println("Not a correct command");
+                    break;
             }
         }
     }
