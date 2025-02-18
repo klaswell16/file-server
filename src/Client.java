@@ -25,6 +25,11 @@ public class Client {
                 case "L":
                     getList(channel);
                     break;
+                case "D":
+                    System.out.println("Enter the name of the file you wan to delete:\n");
+                    String fileName = keyboard.nextLine();
+                    downloadFile(channel);
+                    break;
                 default:
                     System.out.println("Not a correct command");
                     break;
@@ -35,9 +40,6 @@ public class Client {
         ByteBuffer buffer = ByteBuffer.wrap("L".getBytes());
         channel.write(buffer);
 
-
-
-
         ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
         int bytesRead = channel.read(replyBuffer);
         channel.close();
@@ -45,7 +47,22 @@ public class Client {
         byte[] a = new byte[bytesRead];
         replyBuffer.get(a);
         System.out.println(new String(a));
+        channel.close();
+    }
+    public static void downloadFile(SocketChannel channel, String fileName) throws IOException {
+        ByteBuffer buffer = ByteBuffer.wrap("D".getBytes());
+        channel.write(buffer);
 
+        ByteBuffer fileContent = ByteBuffer.wrap(fileName.getBytes());
+        channel.write(fileContent);
+
+        ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
+        int bytesRead = channel.read(replyBuffer);
+        channel.close();
+        replyBuffer.flip();
+        byte[] a = new byte[bytesRead];
+        replyBuffer.get(a);
+        System.out.println(new String (a));
         channel.close();
     }
 

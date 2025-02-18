@@ -20,12 +20,14 @@ public class Server {
                     listenChannel.accept();
             ByteBuffer buffer =
                     ByteBuffer.allocate(1024);
+
             int bytesRead = serverChannel.read(buffer);
             buffer.flip();
             byte[] a = new byte[bytesRead];
             buffer.get(a);
             String header = new String(a);
             System.out.println("Header: " + header);
+
             switch (header) {
                 case "L":
 
@@ -46,6 +48,9 @@ public class Server {
                         serverChannel.write(replyBuffer);
                     }
                     break;
+                case "D":
+                    File file = new File("ServerFiles/+")
+
 
 
             }
