@@ -21,7 +21,6 @@ public class Server {
             SocketChannel serverChannel = listenChannel.accept();
             ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-            // Read the header
             int bytesRead = serverChannel.read(buffer);
             buffer.flip();
             byte[] a = new byte[bytesRead];
@@ -29,61 +28,66 @@ public class Server {
             String header = new String(a).trim();
             System.out.println("Header: " + header);
 
-            switch (header) {
+            String command = header.substring(0, 1);
+            String argument = header.substring(1).trim();
+
+            switch (command) {
                 case "L":
-                    // List files
-                    File directoryPath = new File("ServerFiles/");
-                    File[] filesList = directoryPath.listFiles();
-                    if (filesList != null) {
-                        List<String> fileNames = new ArrayList<>();
-                        for (File file : filesList) {
-                            fileNames.add(file.getName());
-                        }
-                        String fileNamesString = String.join("\n", fileNames);
-                        ByteBuffer replyBuffer = ByteBuffer.wrap(fileNamesString.getBytes());
-                        serverChannel.write(replyBuffer);
-                    } else {
-                        ByteBuffer replyBuffer = ByteBuffer.wrap("No files found".getBytes());
-                        serverChannel.write(replyBuffer);
-                    }
+                    listFiles(serverChannel);
                     break;
 
                 case "D":
-                    // Download file
-                    buffer.clear(); // Clear buffer before reusing it
-                    bytesRead = serverChannel.read(buffer);
-                    buffer.flip();
-                    byte[] b = new byte[bytesRead];
-                    buffer.get(b);
-                    String fileName = new String(b).trim();
-                    File fileToDownload = new File("ServerFiles/" + fileName);
-
-                    if (!fileToDownload.exists()) {
-                        ByteBuffer errorBuffer = ByteBuffer.wrap("File doesn't exist".getBytes());
-                        serverChannel.write(errorBuffer);
-                        System.out.println("File doesn't exist: " + fileName);
-                    } else {
-                        try (FileInputStream fs = new FileInputStream(fileToDownload);
-                             FileChannel fc = fs.getChannel()) {
-
-                            ByteBuffer fileContent = ByteBuffer.allocate(1024);
-                            int byteRead;
-                            while ((byteRead = fc.read(fileContent)) > 0) {
-                                fileContent.flip();
-                                serverChannel.write(fileContent);
-                                fileContent.clear();
-                            }
-                        }
-                    }
+                    downloadFile(serverChannel, argument);
                     break;
 
                 default:
                     ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
                     serverChannel.write(errorBuffer);
-                    System.out.println("Invalid header received: " + header);
+                    System.out.println("Invalid command received: " + header);
                     break;
             }
             serverChannel.close();
+        }
+    }
+
+    public static void listFiles(SocketChannel serverChannel) throws IOException {
+        File directoryPath = new File("ServerFiles/");
+        File[] filesList = directoryPath.listFiles();
+        if (filesList != null) {
+            List<String> fileNames = new ArrayList<>();
+            for (File file : filesList) {
+                fileNames.add(file.getName());
+            }
+            String fileNamesString = String.join("\n", fileNames);
+            ByteBuffer replyBuffer = ByteBuffer.wrap(fileNamesString.getBytes());
+            serverChannel.write(replyBuffer);
+        } else {
+            ByteBuffer replyBuffer = ByteBuffer.wrap("No files found".getBytes());
+            serverChannel.write(replyBuffer);
+        }
+    }
+
+    public static void downloadFile(SocketChannel serverChannel, String fileName) throws IOException {
+        File fileToDownload = new File("ServerFiles/" + fileName);
+
+        if (!fileToDownload.exists()) {
+            ByteBuffer errorBuffer = ByteBuffer.wrap("File doesn't exist".getBytes());
+            serverChannel.write(errorBuffer);
+            System.out.println("File doesn't exist: " + fileName);
+        } else {
+            try (FileInputStream fs = new FileInputStream(fileToDownload);
+                 FileChannel fc = fs.getChannel()) {
+
+                ByteBuffer fileContent = ByteBuffer.allocate(1024);
+                int byteRead;
+                do {
+                    byteRead = fc.read(fileContent);
+                    fileContent.flip();
+                    serverChannel.write(fileContent);
+                    fileContent.clear();
+                } while (byteRead > 0);
+            }
+            System.out.println("File sent successfully: " + fileName);
         }
     }
 }
