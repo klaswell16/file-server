@@ -136,6 +136,7 @@ public class Server {
             String renamed = new String(b).trim();
             File fileTwo = new File(renamed);
             boolean success = fileToRename.renameTo(fileTwo);
+
             if(success){
                 ByteBuffer renamedBuffer = ByteBuffer.wrap("File was renamed".getBytes());
                 serverChannel.write(renamedBuffer);

@@ -135,6 +135,7 @@ public class Client {
             System.out.println(bString);
         }else {
             System.out.println("File doesn't exist or can't be detected");
+
         }
     }
     public static void uploadFile(SocketChannel channel) throws IOException {
