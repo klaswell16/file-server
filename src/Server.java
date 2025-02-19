@@ -155,15 +155,7 @@ public class Server {
 
         FileOutputStream fs = new FileOutputStream("ServerFiles/" + fileName, true);
         FileChannel fc = fs.getChannel();
-        ByteBuffer fileContent = ByteBuffer.allocate(1024);
 
-        while (serverChannel.read(fileContent) >= 0) {
-            fileContent.flip();
-            fc.write(fileContent);
-            fileContent.clear();
-        }
-        fs.close();
-        fc.close();
         File uploadedFile = new File("ServerFiles/" + fileName);
         if (!uploadedFile.exists()){
             ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
@@ -172,6 +164,16 @@ public class Server {
         }else {
             ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
             serverChannel.write(successBuffer);
+
+            ByteBuffer fileContent = ByteBuffer.allocate(1024);
+            while (serverChannel.read(fileContent) >= 0) {
+                fileContent.flip();
+                fc.write(fileContent);
+                fileContent.clear();
+            }
+            fs.close();
+            fc.close();
         }
     }
+
 }

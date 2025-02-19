@@ -21,7 +21,7 @@ public class Client {
         boolean keepGoing = true;
 
         while (keepGoing) {
-            System.out.println("\nEnter a command (L to list, D to download, E to delete, U to upload, R to rename):");
+            System.out.println("\nEnter a command (L to list, D to download, E to delete, U to upload, R to renamed):");
             String command = keyboard.nextLine();
 
             switch (command) {
@@ -146,20 +146,38 @@ public class Client {
         File fileToUpload = new File("ClientFiles/" + fileName);
 
         if (!fileToUpload.exists()) {
-
             System.out.println("File doesn't exist: ");
+            return;
         } else {
-            try (FileInputStream fs = new FileInputStream(fileToUpload);
-                 FileChannel fc = fs.getChannel()) {
+            String message = "U" + fileName;
+            ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+            channel.write(buffer);
 
-                ByteBuffer fileContent = ByteBuffer.allocate(1024);
-                int byteRead;
-                do {
-                    byteRead = fc.read(fileContent);
-                    fileContent.flip();
-                    channel.write(fileContent);
-                    fileContent.clear();
-                } while (byteRead > 0);
+            ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
+            int bytesRead = channel.read(replyBuffer);
+            replyBuffer.flip();
+            byte[] replyBytes = new byte[bytesRead];
+            replyBuffer.get(replyBytes);
+            String serverResponse = new String(replyBytes);
+
+            if (!serverResponse.equals("S")) {
+                try (FileInputStream fs = new FileInputStream(fileToUpload);
+                     FileChannel fc = fs.getChannel()) {
+
+                    ByteBuffer fileContent = ByteBuffer.allocate(1024);
+                    int byteRead;
+                    do {
+                        byteRead = fc.read(fileContent);
+                        fileContent.flip();
+                        channel.write(fileContent);
+                        fileContent.clear();
+                    } while (byteRead > 0);
+                    fc.close();
+                    fs.close();
+            }
+                System.out.println("File uploaded");
+            }else{
+                System.out.println("File failed to upload");
             }
 
         }
