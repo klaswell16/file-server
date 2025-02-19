@@ -160,7 +160,7 @@ public class Client {
             replyBuffer.get(replyBytes);
             String serverResponse = new String(replyBytes);
 
-            if (!serverResponse.equals("S")) {
+            if (!serverResponse.equals("F")) {
                 try (FileInputStream fs = new FileInputStream(fileToUpload);
                      FileChannel fc = fs.getChannel()) {
 
