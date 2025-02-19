@@ -21,7 +21,7 @@ public class Client {
         boolean keepGoing = true;
 
         while (keepGoing) {
-            System.out.println("\nEnter a command (L to list, D to download, E to delete):");
+            System.out.println("\nEnter a command (L to list, D to download, E to delete, U to delete):");
             String command = keyboard.nextLine();
 
             switch (command) {
