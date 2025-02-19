@@ -37,6 +37,11 @@ public class Client {
                     keepGoing = false;
                     break;
 
+                case "R":
+                    renameFile(channel);
+                    keepGoing = false;
+                    break;
+
                 default:
                     System.out.println("Not a correct command");
                     keepGoing = false;
@@ -93,6 +98,27 @@ public class Client {
             System.out.println("File Deletion was successful");
         }else {
             System.out.println("File Deletion failed");
+        }
+    }
+
+    private static void renameFile(SocketChannel channel) throws IOException {
+        System.out.println("Enter the name of the file you want to delete:");
+        String fileName = keyboard.nextLine().trim();
+        String message = "E" + fileName;
+        ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+        channel.write(buffer);
+
+        ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
+        int bytesRead = channel.read(replyBuffer);
+        replyBuffer.flip();
+        byte[] a = new byte[bytesRead];
+        replyBuffer.get(a);
+        String string = new String(a);
+        if (string.equals("S")){
+            System.out.println("File exists what would you like to rename the file to");
+
+        }else {
+            System.out.println("File doesn't exist or can't be detected");
         }
     }
 }

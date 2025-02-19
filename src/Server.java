@@ -45,6 +45,9 @@ public class Server {
                     deleteFile(serverChannel, argument);
                     break;
 
+                case "R":
+                    renameFile(serverChannel, argument);
+
                 default:
                     ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
                     serverChannel.write(errorBuffer);
@@ -107,6 +110,20 @@ public class Server {
             ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
             serverChannel.write(errorBuffer);
             System.out.println("File failed to delete: " + fileName);
+        }
+    }
+
+    public static void renameFile(SocketChannel serverChannel, String fileName) throws IOException {
+        File fileToRename = new File("ServerFiles/" + fileName);
+        if (!fileToRename.exists()){
+            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
+            serverChannel.write(errorBuffer);
+            System.out.println("File doesn't exist: " + fileName);
+        }else {
+            ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
+            serverChannel.write(successBuffer);
+
+            ByteBuffer renamedFile =
         }
     }
 }
