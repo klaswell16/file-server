@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +39,10 @@ public class Server {
 
                 case "D":
                     downloadFile(serverChannel, argument);
+                    break;
+
+                case "E":
+                    deleteFile(serverChannel, argument);
                     break;
 
                 default:
@@ -71,7 +76,7 @@ public class Server {
         File fileToDownload = new File("ServerFiles/" + fileName);
 
         if (!fileToDownload.exists()) {
-            ByteBuffer errorBuffer = ByteBuffer.wrap("File doesn't exist".getBytes());
+            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
             serverChannel.write(errorBuffer);
             System.out.println("File doesn't exist: " + fileName);
         } else {
@@ -88,6 +93,20 @@ public class Server {
                 } while (byteRead > 0);
             }
             System.out.println("File sent successfully: " + fileName);
+        }
+    }
+
+    public static void deleteFile(SocketChannel serverChannel, String fileName) throws IOException {
+        File fileToDelete = new File("ServerFiles/" + fileName);
+
+        if (fileToDelete.delete()){
+            ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
+            serverChannel.write(successBuffer);
+            System.out.println("File deleted: " + fileName);
+        }else{
+            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
+            serverChannel.write(errorBuffer);
+            System.out.println("File failed to delete: " + fileName);
         }
     }
 }
