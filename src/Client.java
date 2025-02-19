@@ -116,7 +116,17 @@ public class Client {
         String string = new String(a);
         if (string.equals("S")){
             System.out.println("File exists what would you like to rename the file to");
+            String renamedFile = keyboard.nextLine().trim();
+            ByteBuffer renamedBuffer = ByteBuffer.wrap(renamedFile.getBytes());
+            channel.write(renamedBuffer);
 
+            ByteBuffer repliedBuffer = ByteBuffer.allocate(1024);
+            int byteRead = channel.read(repliedBuffer);
+            repliedBuffer.flip();
+            byte[] b = new byte[byteRead];
+            repliedBuffer.get(b);
+            String bString = new String(b);
+            System.out.println(bString);
         }else {
             System.out.println("File doesn't exist or can't be detected");
         }
