@@ -21,7 +21,7 @@ public class Client {
         boolean keepGoing = true;
 
         while (keepGoing) {
-            System.out.println("\nEnter a command (L to list, D to download, E to delete, U to delete):");
+            System.out.println("\nEnter a command (L to list, D to download, E to delete, U to upload, R to rename):");
             String command = keyboard.nextLine();
 
             switch (command) {
@@ -108,9 +108,9 @@ public class Client {
     }
 
     private static void renameFile(SocketChannel channel) throws IOException {
-        System.out.println("Enter the name of the file you want to delete:");
+        System.out.println("Enter the name of the file you want to rename:");
         String fileName = keyboard.nextLine().trim();
-        String message = "E" + fileName;
+        String message = "R" + fileName;
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
 
@@ -126,11 +126,11 @@ public class Client {
             ByteBuffer renamedBuffer = ByteBuffer.wrap(renamedFile.getBytes());
             channel.write(renamedBuffer);
 
-            ByteBuffer repliedBuffer = ByteBuffer.allocate(1024);
-            int byteRead = channel.read(repliedBuffer);
-            repliedBuffer.flip();
+            ByteBuffer finalReplyBuffer = ByteBuffer.allocate(1024);
+            int byteRead = channel.read(finalReplyBuffer);
+            finalReplyBuffer.flip();
             byte[] b = new byte[byteRead];
-            repliedBuffer.get(b);
+            finalReplyBuffer.get(b);
             String bString = new String(b);
             System.out.println(bString);
         }else {

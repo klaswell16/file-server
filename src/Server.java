@@ -48,9 +48,11 @@ public class Server {
 
                 case "R":
                     renameFile(serverChannel, argument);
+                    break;
 
                 case "U":
                     uploadFile(serverChannel, argument);
+                    break;
 
                 default:
                     ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
@@ -120,27 +122,33 @@ public class Server {
 
     public static void renameFile(SocketChannel serverChannel, String fileName) throws IOException {
         File fileToRename = new File("ServerFiles/" + fileName);
-        if (!fileToRename.exists()){
+
+        if (!fileToRename.exists()) {
             ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
             serverChannel.write(errorBuffer);
             System.out.println("File doesn't exist: " + fileName);
-        }else {
-            ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
-            serverChannel.write(successBuffer);
+            return;
+        }
 
-            ByteBuffer renamedFile = ByteBuffer.allocate(1024);
-            int bytesRead = serverChannel.read(renamedFile);
-            renamedFile.flip();
-            byte[] b = new byte[bytesRead];
-            renamedFile.get(b);
-            String renamed = new String(b).trim();
-            File fileTwo = new File(renamed);
-            boolean success = fileToRename.renameTo(fileTwo);
+        ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
+        serverChannel.write(successBuffer);
 
-            if(success){
-                ByteBuffer renamedBuffer = ByteBuffer.wrap("File was renamed".getBytes());
-                serverChannel.write(renamedBuffer);
-            }
+        ByteBuffer renamedFileBuffer = ByteBuffer.allocate(1024);
+        int bytesRead = serverChannel.read(renamedFileBuffer);
+        renamedFileBuffer.flip();
+        byte[] b = new byte[bytesRead];
+        renamedFileBuffer.get(b);
+        String renamed = new String(b).trim();
+
+        File newFile = new File("ServerFiles/" + renamed);
+        if (fileToRename.renameTo(newFile)) {
+            ByteBuffer renamedBuffer = ByteBuffer.wrap("File was renamed".getBytes());
+            serverChannel.write(renamedBuffer);
+            System.out.println("File renamed to: " + renamed);
+        } else {
+            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
+            serverChannel.write(errorBuffer);
+            System.out.println("Failed to rename file: " + fileName);
         }
     }
     public static void uploadFile(SocketChannel serverChannel, String fileName) throws IOException {
