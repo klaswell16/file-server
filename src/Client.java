@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -39,6 +41,10 @@ public class Client {
 
                 case "R":
                     renameFile(channel);
+                    keepGoing = false;
+                    break;
+                case "U":
+                    uploadFile(channel);
                     keepGoing = false;
                     break;
 
@@ -119,6 +125,32 @@ public class Client {
 
         }else {
             System.out.println("File doesn't exist or can't be detected");
+        }
+    }
+    public static void uploadFile(SocketChannel channel) throws IOException {
+
+        System.out.println("Enter the name of the file you want to upload: ");
+        String fileName = keyboard.nextLine();
+
+        File fileToUpload = new File("ClientFiles/" + fileName);
+
+        if (!fileToUpload.exists()) {
+
+            System.out.println("File doesn't exist: ");
+        } else {
+            try (FileInputStream fs = new FileInputStream(fileToUpload);
+                 FileChannel fc = fs.getChannel()) {
+
+                ByteBuffer fileContent = ByteBuffer.allocate(1024);
+                int byteRead;
+                do {
+                    byteRead = fc.read(fileContent);
+                    fileContent.flip();
+                    channel.write(fileContent);
+                    fileContent.clear();
+                } while (byteRead > 0);
+            }
+
         }
     }
 }

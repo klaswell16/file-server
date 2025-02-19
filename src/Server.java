@@ -1,6 +1,7 @@
 import java.io.File;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -48,6 +49,9 @@ public class Server {
                 case "R":
                     renameFile(serverChannel, argument);
 
+                case "U":
+                    uploadFile(serverChannel, argument);
+
                 default:
                     ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
                     serverChannel.write(errorBuffer);
@@ -76,6 +80,7 @@ public class Server {
     }
 
     public static void downloadFile(SocketChannel serverChannel, String fileName) throws IOException {
+
         File fileToDownload = new File("ServerFiles/" + fileName);
 
         if (!fileToDownload.exists()) {
@@ -123,7 +128,29 @@ public class Server {
             ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
             serverChannel.write(successBuffer);
 
-            ByteBuffer renamedFile =
+        }
+    }
+    public static void uploadFile(SocketChannel serverChannel, String fileName) throws IOException {
+
+        FileOutputStream fs = new FileOutputStream("ServerFiles/" + fileName, true);
+        FileChannel fc = fs.getChannel();
+        ByteBuffer fileContent = ByteBuffer.allocate(1024);
+
+        while (serverChannel.read(fileContent) >= 0) {
+            fileContent.flip();
+            fc.write(fileContent);
+            fileContent.clear();
+        }
+        fs.close();
+        fc.close();
+        File uploadedFile = new File("ServerFiles/" + fileName);
+        if (!uploadedFile.exists()){
+            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
+            serverChannel.write(errorBuffer);
+            System.out.println("File doesn't exist: " + fileName);
+        }else {
+            ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
+            serverChannel.write(successBuffer);
         }
     }
 }
