@@ -128,6 +128,18 @@ public class Server {
             ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
             serverChannel.write(successBuffer);
 
+            ByteBuffer renamedFile = ByteBuffer.allocate(1024);
+            int bytesRead = serverChannel.read(renamedFile);
+            renamedFile.flip();
+            byte[] b = new byte[bytesRead];
+            renamedFile.get(b);
+            String renamed = new String(b).trim();
+            File fileTwo = new File(renamed);
+            boolean success = fileToRename.renameTo(fileTwo);
+            if(success){
+                ByteBuffer renamedBuffer = ByteBuffer.wrap("File was renamed".getBytes());
+                serverChannel.write(renamedBuffer);
+            }
         }
     }
     public static void uploadFile(SocketChannel serverChannel, String fileName) throws IOException {
