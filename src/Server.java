@@ -139,6 +139,7 @@ public class Server {
         renamedFileBuffer.flip();
         byte[] b = new byte[bytesRead];
         renamedFileBuffer.get(b);
+
         String renamed = new String(b).trim();
 
         File newFile = new File("ServerFiles/" + renamed);

@@ -77,6 +77,7 @@ public class Client {
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
         channel.shutdownOutput();
+
         FileOutputStream fs = new FileOutputStream("ClientFiles/" + fileName, true);
         FileChannel fc = fs.getChannel();
         ByteBuffer fileContent = ByteBuffer.allocate(1024);
