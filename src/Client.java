@@ -53,6 +53,7 @@ public class Client {
                     keepGoing = false;
                     break;
             }
+            channel.close();
         }
     }
 
@@ -66,6 +67,7 @@ public class Client {
         byte[] a = new byte[bytesRead];
         replyBuffer.get(a);
         System.out.println("Available Files:\n" + new String(a));
+
     }
 
     public static void downloadFile(SocketChannel channel) throws IOException {
@@ -74,7 +76,7 @@ public class Client {
         String message = "D" + fileName;
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
-
+        channel.shutdownOutput();
         FileOutputStream fs = new FileOutputStream("ClientFiles/" + fileName, true);
         FileChannel fc = fs.getChannel();
         ByteBuffer fileContent = ByteBuffer.allocate(1024);
@@ -93,6 +95,7 @@ public class Client {
         String message = "E" + fileName;
         ByteBuffer buffer =ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
+        channel.shutdownOutput();
 
         ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
         int bytesRead = channel.read(replyBuffer);
@@ -114,6 +117,7 @@ public class Client {
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
 
+
         ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
         int bytesRead = channel.read(replyBuffer);
         replyBuffer.flip();
@@ -125,6 +129,7 @@ public class Client {
             String renamedFile = keyboard.nextLine().trim();
             ByteBuffer renamedBuffer = ByteBuffer.wrap(renamedFile.getBytes());
             channel.write(renamedBuffer);
+            channel.shutdownOutput();
 
             ByteBuffer finalReplyBuffer = ByteBuffer.allocate(1024);
             int byteRead = channel.read(finalReplyBuffer);
@@ -135,6 +140,7 @@ public class Client {
             System.out.println(bString);
         }else {
             System.out.println("File doesn't exist or can't be detected");
+            channel.shutdownOutput();
 
         }
     }
@@ -147,12 +153,11 @@ public class Client {
 
         if (!fileToUpload.exists()) {
             System.out.println("File doesn't exist: ");
-            return;
+            channel.shutdownOutput();
         } else {
             String message = "U" + fileName;
             ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
             channel.write(buffer);
-
             ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
             int bytesRead = channel.read(replyBuffer);
             replyBuffer.flip();
@@ -172,6 +177,7 @@ public class Client {
                         channel.write(fileContent);
                         fileContent.clear();
                     } while (byteRead > 0);
+                    channel.shutdownOutput();
                     fc.close();
                     fs.close();
             }

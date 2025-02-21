@@ -75,6 +75,7 @@ public class Server {
             String fileNamesString = String.join("\n", fileNames);
             ByteBuffer replyBuffer = ByteBuffer.wrap(fileNamesString.getBytes());
             serverChannel.write(replyBuffer);
+
         } else {
             ByteBuffer replyBuffer = ByteBuffer.wrap("No files found".getBytes());
             serverChannel.write(replyBuffer);
