@@ -9,7 +9,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,42 +24,49 @@ public class Server {
 
             int bytesRead = serverChannel.read(buffer);
             buffer.flip();
-            byte[] a = new byte[bytesRead];
-            buffer.get(a);
-            String header = new String(a).trim();
-            System.out.println("Header: " + header);
+            if (bytesRead>0){
+                byte[] a = new byte[bytesRead];
+                buffer.get(a);
+                String header = new String(a).trim();
+                System.out.println("Header: " + header);
 
-            String command = header.substring(0, 1);
-            String argument = header.substring(1).trim();
+                String command = header.substring(0, 1);
+                String argument = header.substring(1).trim();
 
-            switch (command) {
-                case "L":
-                    listFiles(serverChannel);
-                    break;
+                switch (command) {
+                    case "L":
+                        listFiles(serverChannel);
+                        break;
 
-                case "D":
-                    downloadFile(serverChannel, argument);
-                    break;
+                    case "D":
+                        downloadFile(serverChannel, argument);
+                        break;
 
-                case "E":
-                    deleteFile(serverChannel, argument);
-                    break;
+                    case "E":
+                        deleteFile(serverChannel, argument);
+                        break;
 
-                case "R":
-                    renameFile(serverChannel, argument);
-                    break;
+                    case "R":
+                        renameFile(serverChannel, argument);
+                        break;
 
-                case "U":
-                    uploadFile(serverChannel, argument);
-                    break;
+                    case "U":
+                        uploadFile(serverChannel, argument);
+                        break;
 
-                default:
-                    ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
-                    serverChannel.write(errorBuffer);
-                    System.out.println("Invalid command received: " + header);
-                    break;
+                    default:
+                        ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
+                        serverChannel.write(errorBuffer);
+                        System.out.println("Invalid command received: " + header);
+                        break;
+                }
+                serverChannel.close();
+            }else {
+                ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
+                serverChannel.write(errorBuffer);
+                System.out.println("Invalid command received: ");
             }
-            serverChannel.close();
+
         }
     }
 
@@ -75,7 +81,6 @@ public class Server {
             String fileNamesString = String.join("\n", fileNames);
             ByteBuffer replyBuffer = ByteBuffer.wrap(fileNamesString.getBytes());
             serverChannel.write(replyBuffer);
-
         } else {
             ByteBuffer replyBuffer = ByteBuffer.wrap("No files found".getBytes());
             serverChannel.write(replyBuffer);
