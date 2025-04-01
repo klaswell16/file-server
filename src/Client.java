@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 
 public class Client {
     public static Scanner keyboard = new Scanner(System.in);
+
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
             System.out.println("Please provide <serverIP> and <serverPort>");
@@ -18,43 +19,39 @@ public class Client {
         int serverPort = Integer.parseInt(args[1]);
         SocketChannel channel = SocketChannel.open();
         channel.connect(new InetSocketAddress(args[0], serverPort));
-        boolean keepGoing = true;
 
-        while (keepGoing) {
-            System.out.println("\nEnter a command (L to list, D to download, E to delete, U to upload, R to renamed):");
-            String command = keyboard.nextLine();
+        while (true) {
+            System.out.println("\nEnter a command (L to list, D to download, E to delete, U to upload, R to rename, Q to quit):");
+            String command = keyboard.nextLine().trim().toUpperCase();
+
+            if (command.equals("Q")) {
+                System.out.println("Closing connection...");
+                channel.close();
+                break;
+            }
 
             switch (command) {
                 case "L":
                     getList(channel);
-                    keepGoing = false;
                     break;
                 case "D":
                     downloadFile(channel);
-                    keepGoing = false;
                     break;
-
                 case "E":
                     deleteFile(channel);
-                    keepGoing = false;
                     break;
-
                 case "R":
                     renameFile(channel);
-                    keepGoing = false;
                     break;
                 case "U":
                     uploadFile(channel);
-                    keepGoing = false;
                     break;
-
                 default:
-                    System.out.println("Not a correct command");
-                    keepGoing = false;
+                    System.out.println("Invalid command. Please try again.");
                     break;
             }
-            channel.close();
         }
+        keyboard.close();
     }
 
     public static void getList(SocketChannel channel) throws IOException {
@@ -67,7 +64,6 @@ public class Client {
         byte[] a = new byte[bytesRead];
         replyBuffer.get(a);
         System.out.println("Available Files:\n" + new String(a));
-
     }
 
     public static void downloadFile(SocketChannel channel) throws IOException {
@@ -76,8 +72,11 @@ public class Client {
         String message = "D" + fileName;
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
-        channel.shutdownOutput();
-        FileOutputStream fs = new FileOutputStream("ClientFiles/" + fileName, true);
+
+
+        new File("ClientFiles").mkdirs();
+
+        FileOutputStream fs = new FileOutputStream("ClientFiles/" + fileName);
         FileChannel fc = fs.getChannel();
         ByteBuffer fileContent = ByteBuffer.allocate(1024);
 
@@ -88,14 +87,15 @@ public class Client {
         }
         fs.close();
         fc.close();
+        System.out.println("File downloaded successfully to ClientFiles/" + fileName);
     }
+
     private static void deleteFile(SocketChannel channel) throws IOException {
         System.out.println("Enter the name of the file you want to delete:");
         String fileName = keyboard.nextLine().trim();
         String message = "E" + fileName;
-        ByteBuffer buffer =ByteBuffer.wrap(message.getBytes());
+        ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
-        channel.shutdownOutput();
 
         ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
         int bytesRead = channel.read(replyBuffer);
@@ -103,10 +103,10 @@ public class Client {
         byte[] a = new byte[bytesRead];
         replyBuffer.get(a);
         String string = new String(a);
-        if (string.equals("S")){
-            System.out.println("File Deletion was successful");
-        }else {
-            System.out.println("File Deletion failed");
+        if (string.equals("S")) {
+            System.out.println("File deletion was successful");
+        } else {
+            System.out.println("File deletion failed");
         }
     }
 
@@ -117,19 +117,17 @@ public class Client {
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
 
-
         ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
         int bytesRead = channel.read(replyBuffer);
         replyBuffer.flip();
         byte[] a = new byte[bytesRead];
         replyBuffer.get(a);
         String string = new String(a);
-        if (string.equals("S")){
-            System.out.println("File exists what would you like to rename the file to");
+        if (string.equals("S")) {
+            System.out.println("File exists. What would you like to rename the file to?");
             String renamedFile = keyboard.nextLine().trim();
             ByteBuffer renamedBuffer = ByteBuffer.wrap(renamedFile.getBytes());
             channel.write(renamedBuffer);
-            channel.shutdownOutput();
 
             ByteBuffer finalReplyBuffer = ByteBuffer.allocate(1024);
             int byteRead = channel.read(finalReplyBuffer);
@@ -138,54 +136,48 @@ public class Client {
             finalReplyBuffer.get(b);
             String bString = new String(b);
             System.out.println(bString);
-        }else {
+        } else {
             System.out.println("File doesn't exist or can't be detected");
-            channel.shutdownOutput();
-
         }
     }
-    public static void uploadFile(SocketChannel channel) throws IOException {
 
-        System.out.println("Enter the name of the file you want to upload: ");
-        String fileName = keyboard.nextLine();
+    public static void uploadFile(SocketChannel channel) throws IOException {
+        System.out.println("Enter the name of the file you want to upload:");
+        String fileName = keyboard.nextLine().trim();
 
         File fileToUpload = new File("ClientFiles/" + fileName);
 
         if (!fileToUpload.exists()) {
-            System.out.println("File doesn't exist: ");
-            channel.shutdownOutput();
+            System.out.println("File doesn't exist in ClientFiles directory");
+            return;
+        }
+
+        String message = "U" + fileName;
+        ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+        channel.write(buffer);
+
+        ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
+        int bytesRead = channel.read(replyBuffer);
+        replyBuffer.flip();
+        byte[] replyBytes = new byte[bytesRead];
+        replyBuffer.get(replyBytes);
+        String serverResponse = new String(replyBytes);
+
+        if (!serverResponse.equals("F")) {
+            try (FileInputStream fs = new FileInputStream(fileToUpload);
+                 FileChannel fc = fs.getChannel()) {
+
+                ByteBuffer fileContent = ByteBuffer.allocate(1024);
+                int byteRead;
+                while ((byteRead = fc.read(fileContent)) > 0) {
+                    fileContent.flip();
+                    channel.write(fileContent);
+                    fileContent.clear();
+                }
+                System.out.println("File uploaded successfully");
+            }
         } else {
-            String message = "U" + fileName;
-            ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
-            channel.write(buffer);
-            ByteBuffer replyBuffer = ByteBuffer.allocate(1024);
-            int bytesRead = channel.read(replyBuffer);
-            replyBuffer.flip();
-            byte[] replyBytes = new byte[bytesRead];
-            replyBuffer.get(replyBytes);
-            String serverResponse = new String(replyBytes);
-
-            if (!serverResponse.equals("F")) {
-                try (FileInputStream fs = new FileInputStream(fileToUpload);
-                     FileChannel fc = fs.getChannel()) {
-
-                    ByteBuffer fileContent = ByteBuffer.allocate(1024);
-                    int byteRead;
-                    do {
-                        byteRead = fc.read(fileContent);
-                        fileContent.flip();
-                        channel.write(fileContent);
-                        fileContent.clear();
-                    } while (byteRead > 0);
-                    channel.shutdownOutput();
-                    fc.close();
-                    fs.close();
-            }
-                System.out.println("File uploaded");
-            }else{
-                System.out.println("File failed to upload");
-            }
-
+            System.out.println("File upload failed - file may already exist on server");
         }
     }
 }
