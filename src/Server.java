@@ -1,31 +1,43 @@
-import java.io.File;
-
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-
-import java.nio.channels.FileChannel;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.file.Files;
+import java.nio.channels.*;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     public static void main(String[] args) throws IOException {
+        ExecutorService executor = Executors.newFixedThreadPool(4);
         ServerSocketChannel listenChannel = ServerSocketChannel.open();
         listenChannel.bind(new InetSocketAddress(3000));
 
+        System.out.println("Server started on port " + 3000);
+
         while (true) {
             SocketChannel serverChannel = listenChannel.accept();
-            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            executor.submit(new ClientHandler(serverChannel));
+        }
+    }
+}
 
+class ClientHandler implements Runnable {
+    private final SocketChannel serverChannel;
+    private static final int BUFFER_SIZE = 1024;
+
+    public ClientHandler(SocketChannel serverChannel) {
+        this.serverChannel = serverChannel;
+    }
+
+    @Override
+    public void run() {
+        try {
+            ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
             int bytesRead = serverChannel.read(buffer);
             buffer.flip();
-            if (bytesRead>0){
+
+            if (bytesRead > 0) {
                 byte[] a = new byte[bytesRead];
                 buffer.get(a);
                 String header = new String(a).trim();
@@ -36,42 +48,41 @@ public class Server {
 
                 switch (command) {
                     case "L":
-                        listFiles(serverChannel);
+                        listFiles();
                         break;
-
                     case "D":
-                        downloadFile(serverChannel, argument);
+                        downloadFile(argument);
                         break;
-
                     case "E":
-                        deleteFile(serverChannel, argument);
+                        deleteFile(argument);
                         break;
-
                     case "R":
-                        renameFile(serverChannel, argument);
+                        renameFile(argument);
                         break;
-
                     case "U":
-                        uploadFile(serverChannel, argument);
+                        uploadFile(argument);
                         break;
-
                     default:
-                        ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
-                        serverChannel.write(errorBuffer);
+                        sendMessage("Invalid command");
                         System.out.println("Invalid command received: " + header);
                         break;
                 }
-                serverChannel.close();
-            }else {
-                ByteBuffer errorBuffer = ByteBuffer.wrap("Invalid command".getBytes());
-                serverChannel.write(errorBuffer);
-                System.out.println("Invalid command received: ");
+            } else {
+                sendMessage("Invalid command");
+                System.out.println("Invalid command received.");
             }
-
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                serverChannel.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    public static void listFiles(SocketChannel serverChannel) throws IOException {
+    private void listFiles() throws IOException {
         File directoryPath = new File("ServerFiles/");
         File[] filesList = directoryPath.listFiles();
         if (filesList != null) {
@@ -79,28 +90,22 @@ public class Server {
             for (File file : filesList) {
                 fileNames.add(file.getName());
             }
-            String fileNamesString = String.join("\n", fileNames);
-            ByteBuffer replyBuffer = ByteBuffer.wrap(fileNamesString.getBytes());
-            serverChannel.write(replyBuffer);
+            sendMessage(String.join("\n", fileNames));
         } else {
-            ByteBuffer replyBuffer = ByteBuffer.wrap("No files found".getBytes());
-            serverChannel.write(replyBuffer);
+            sendMessage("No files found");
         }
     }
 
-    public static void downloadFile(SocketChannel serverChannel, String fileName) throws IOException {
-
+    private void downloadFile(String fileName) throws IOException {
         File fileToDownload = new File("ServerFiles/" + fileName);
-
         if (!fileToDownload.exists()) {
-            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
-            serverChannel.write(errorBuffer);
+            sendMessage("F");
             System.out.println("File doesn't exist: " + fileName);
         } else {
             try (FileInputStream fs = new FileInputStream(fileToDownload);
                  FileChannel fc = fs.getChannel()) {
 
-                ByteBuffer fileContent = ByteBuffer.allocate(1024);
+                ByteBuffer fileContent = ByteBuffer.allocate(BUFFER_SIZE);
                 int byteRead;
                 do {
                     byteRead = fc.read(fileContent);
@@ -113,34 +118,27 @@ public class Server {
         }
     }
 
-    public static void deleteFile(SocketChannel serverChannel, String fileName) throws IOException {
+    private void deleteFile(String fileName) throws IOException {
         File fileToDelete = new File("ServerFiles/" + fileName);
-
-        if (fileToDelete.delete()){
-            ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
-            serverChannel.write(successBuffer);
+        if (fileToDelete.delete()) {
+            sendMessage("S");
             System.out.println("File deleted: " + fileName);
-        }else{
-            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
-            serverChannel.write(errorBuffer);
+        } else {
+            sendMessage("F");
             System.out.println("File failed to delete: " + fileName);
         }
     }
 
-    public static void renameFile(SocketChannel serverChannel, String fileName) throws IOException {
+    private void renameFile(String fileName) throws IOException {
         File fileToRename = new File("ServerFiles/" + fileName);
-
         if (!fileToRename.exists()) {
-            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
-            serverChannel.write(errorBuffer);
+            sendMessage("F");
             System.out.println("File doesn't exist: " + fileName);
             return;
         }
 
-        ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
-        serverChannel.write(successBuffer);
-
-        ByteBuffer renamedFileBuffer = ByteBuffer.allocate(1024);
+        sendMessage("S"); // Acknowledge file exists
+        ByteBuffer renamedFileBuffer = ByteBuffer.allocate(BUFFER_SIZE);
         int bytesRead = serverChannel.read(renamedFileBuffer);
         renamedFileBuffer.flip();
         byte[] b = new byte[bytesRead];
@@ -149,30 +147,26 @@ public class Server {
 
         File newFile = new File("ServerFiles/" + renamed);
         if (fileToRename.renameTo(newFile)) {
-            ByteBuffer renamedBuffer = ByteBuffer.wrap("File was renamed".getBytes());
-            serverChannel.write(renamedBuffer);
+            sendMessage("File was renamed");
             System.out.println("File renamed to: " + renamed);
         } else {
-            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
-            serverChannel.write(errorBuffer);
+            sendMessage("F");
             System.out.println("Failed to rename file: " + fileName);
         }
     }
-    public static void uploadFile(SocketChannel serverChannel, String fileName) throws IOException {
 
+    private void uploadFile(String fileName) throws IOException {
         FileOutputStream fs = new FileOutputStream("ServerFiles/" + fileName, true);
         FileChannel fc = fs.getChannel();
 
         File uploadedFile = new File("ServerFiles/" + fileName);
-        if (!uploadedFile.exists()){
-            ByteBuffer errorBuffer = ByteBuffer.wrap("F".getBytes());
-            serverChannel.write(errorBuffer);
+        if (!uploadedFile.exists()) {
+            sendMessage("F");
             System.out.println("File doesn't exist: " + fileName);
-        }else {
-            ByteBuffer successBuffer = ByteBuffer.wrap("S".getBytes());
-            serverChannel.write(successBuffer);
+        } else {
+            sendMessage("S"); // Acknowledge upload start
 
-            ByteBuffer fileContent = ByteBuffer.allocate(1024);
+            ByteBuffer fileContent = ByteBuffer.allocate(BUFFER_SIZE);
             while (serverChannel.read(fileContent) >= 0) {
                 fileContent.flip();
                 fc.write(fileContent);
@@ -183,4 +177,8 @@ public class Server {
         }
     }
 
+    private void sendMessage(String message) throws IOException {
+        ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+        serverChannel.write(buffer);
+    }
 }
