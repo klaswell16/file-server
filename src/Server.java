@@ -6,8 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Scanner;
 
 public class Server {
+    private static volatile boolean running = true;
+
     public static void main(String[] args) throws IOException {
         ExecutorService executor = Executors.newFixedThreadPool(4);
         ServerSocketChannel listenChannel = ServerSocketChannel.open();
@@ -15,10 +18,41 @@ public class Server {
 
         System.out.println("Server started on port " + 3000);
 
-        while (true) {
-            SocketChannel serverChannel = listenChannel.accept();
-            executor.submit(new ClientHandler(serverChannel));
+        Thread acceptThread = new Thread(() -> {
+            try {
+                while (running) {
+                    SocketChannel serverChannel = listenChannel.accept();
+                    if (serverChannel != null) {
+                        executor.submit(new ClientHandler(serverChannel));
+                    }
+                }
+            } catch (IOException e) {
+                if (running) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        acceptThread.start();
+
+        // Monitor admin input
+        Scanner scanner = new Scanner(System.in);
+        while (running) {
+            String command = scanner.nextLine().trim();
+            if (command.equalsIgnoreCase("Q")) {
+                System.out.println("Shutting down server...");
+                running = false;
+                try {
+                    listenChannel.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                executor.shutdown();
+                System.out.println("Server shut down successfully.");
+                break;
+            }
         }
+        scanner.close();
     }
 }
 
