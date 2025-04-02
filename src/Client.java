@@ -4,8 +4,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Client {
     public static Scanner keyboard = new Scanner(System.in);
@@ -30,9 +28,11 @@ public class Client {
                     getList(channel);
                     break;
                 case "D":
+                    Thread.sleep(10000);
                     downloadFile(channel);
                     break;
                 case "U":
+                    Thread.sleep(10000);
                     uploadFile(channel);
                     break;
                 case "E":
@@ -61,12 +61,7 @@ public class Client {
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
         channel.write(buffer);
 
-        try {
-            System.out.println("Simulating download delay...");
-            Thread.sleep(5000); // Simulate network delay
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
 
         FileOutputStream fs = new FileOutputStream("ClientFiles/" + fileName);
         FileChannel fc = fs.getChannel();
@@ -105,12 +100,7 @@ public class Client {
         String serverResponse = new String(replyBytes);
 
         if (!serverResponse.equals("F")) {
-            try {
-                System.out.println("Simulating upload delay...");
-                Thread.sleep(5000); // Simulate network delay
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
 
             try (FileInputStream fs = new FileInputStream(fileToUpload);
                  FileChannel fc = fs.getChannel()) {
